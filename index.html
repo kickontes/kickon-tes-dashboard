@@ -160,7 +160,10 @@ tr.group-row td{background:rgba(61,81,102,0.1);font-weight:600;}
     <div class="header-stat">Completed <strong>335</strong></div>
     <div class="header-stat">Venues <strong>11</strong></div>
     <div class="header-stat">Weeks <strong>3</strong></div>
-      <div id="monthSwitcher" style="margin-left:auto;display:none;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+      <div id="monthSwitcher" style="margin-left:auto;position:relative;display:none;">
+        <button id="monthSwitcherBtn" onclick="toggleMonthDropdown(event)" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600;">📅 Switch month ▾</button>
+        <div id="monthDropdownList" style="display:none;position:fixed;background:#1e293b;border:1px solid #3d5166;border-radius:10px;min-width:170px;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,0.6);overflow:hidden;"></div>
+      </div>
       <button onclick="openUpdateModal()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:6px;" title="Upload new Excel data">⬆ Update Data</button>
 </div>
 </div>
@@ -1104,15 +1107,35 @@ function getSavedMonths() {
   catch(e) { return []; }
 }
 
+function toggleMonthDropdown(e) {
+  e.stopPropagation();
+  const list = document.getElementById('monthDropdownList');
+  const btn = document.getElementById('monthSwitcherBtn');
+  if (!list || !btn) return;
+  if (list.style.display === 'none') {
+    const rect = btn.getBoundingClientRect();
+    list.style.top = (rect.bottom + 6) + 'px';
+    list.style.right = (window.innerWidth - rect.right) + 'px';
+    list.style.display = 'block';
+  } else {
+    list.style.display = 'none';
+  }
+}
+document.addEventListener('click', function() {
+  const list = document.getElementById('monthDropdownList');
+  if (list) list.style.display = 'none';
+});
+
 function refreshMonthSelectors() {
   const months = getSavedMonths();
-  // Header month buttons — one visible button per saved month
   const switcher = document.getElementById('monthSwitcher');
+  const list = document.getElementById('monthDropdownList');
   if (switcher) {
     if (months.length > 1) {
-      switcher.style.display = 'flex';
-      switcher.innerHTML = '<span style="color:#94a3b8;font-size:0.78rem;font-weight:600;white-space:nowrap;">📅 View month:</span>' +
-        months.map(m => `<button onclick="switchToMonth('${m}')" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#ffffff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:0.8rem;font-weight:600;white-space:nowrap;">${formatMonthFull(m)}</button>`).join('');
+      switcher.style.display = 'block';
+      if (list) list.innerHTML = months.map(m =>
+        `<div onclick="switchToMonth('${m}')" style="padding:11px 18px;color:#e2e8f0;cursor:pointer;font-size:0.87rem;font-weight:500;border-bottom:1px solid #2d4059;background:#1e293b;" onmouseover="this.style.background='#2d4a6a'" onmouseout="this.style.background='#1e293b'">${formatMonthFull(m)}</div>`
+      ).join('');
     } else {
       switcher.style.display = 'none';
     }
