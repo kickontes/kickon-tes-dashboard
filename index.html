@@ -212,7 +212,6 @@ tr.group-row td{background:rgba(61,81,102,0.1);font-weight:600;}
   <span class="filter-label">Filter</span>
   <select id="fWeek" onchange="applyFilters()">
     <option value="">All weeks</option>
-    <option>Week 1</option><option>Week 2</option><option>Week 3</option>
   </select>
   <select id="fVenue" onchange="applyFilters()">
     <option value="">All venues</option>
@@ -632,47 +631,55 @@ function venueRow(rank,v) {
 
 // ===== WEEKLY =====
 function renderWeekly() {
-  const weeks = filters.week ? [filters.week] : ['Week 1','Week 2','Week 3'];
+  // Compute weeks dynamically from live RAW data
+  const allWeeks = [...new Set(RAW.map(r => r.w).filter(Boolean))].sort((a,b)=>
+    parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,''))
+  );
+  const weeks = filters.week ? [filters.week] : allWeeks;
+  const venueFilter = filters.venue;
+  const allVenues = [...new Set(RAW.map(r => r.v).filter(Boolean))].sort();
+
   let html = '';
   weeks.forEach(wk => {
-    const d = WEEKLY[wk];
-    const venueFilter = filters.venue;
+    const wkRows = RAW.filter(r => r.w === wk);
+    const venuesToShow = venueFilter ? allVenues.filter(v => v === venueFilter) : allVenues;
+
     html += `<div style="margin-bottom:28px">
       <div class="section-title" style="margin-bottom:12px">${wk}</div>
       <div class="table-wrap"><table>
       <thead><tr>
-        <th>Venue</th><th>Sent</th><th>Done</th><th>Completion</th><th>ESAT</th>
+        <th>Venue</th><th>Responses</th><th>ESAT</th>
         <th>Lead By Example</th><th>Real Conversations</th><th>Do What We Say</th><th>Confident</th>
       </tr></thead><tbody>`;
 
-    WVENUES.forEach((name,i)=>{
-      if (venueFilter && !name.toLowerCase().includes(venueFilter.split(' ')[0].toLowerCase())) return;
-      const nd = d.done[i];
+    venuesToShow.forEach(vname => {
+      const vr = wkRows.filter(r => r.v === vname);
+      if (!vr.length) return;
+      const nd = vr.length;
+      const esat = vr.filter(r => r.e >= 8).length / nd;
+      const q1 = qsc(vr,'q1'), q2 = qsc(vr,'q2'), q3 = qsc(vr,'q3'), q4 = qsc(vr,'q4');
       html += `<tr>
-        <td class="venue-name">${name}</td>
-        <td>${d.sent[i]}</td><td>${nd}</td>
-        <td>${bar(d.comp[i])}</td>
-        <td>${nd===0?'<span class="pill">N/A</span>':`<span class="pill ${pillC(d.esat[i])}">${pct(d.esat[i])}</span>`}</td>
-        <td>${nd===0?'—':bar(d.q1[i])}</td>
-        <td>${nd===0?'—':bar(d.q2[i])}</td>
-        <td>${nd===0?'—':bar(d.q3[i])}</td>
-        <td>${nd===0?'—':bar(d.q4[i])}</td>
+        <td class="venue-name">${vname}</td><td>${nd}</td>
+        <td><span class="pill ${pillC(esat)}">${pct(esat)}</span></td>
+        <td>${bar(q1)}</td><td>${bar(q2)}</td><td>${bar(q3)}</td><td>${bar(q4)}</td>
       </tr>`;
     });
 
     if (!venueFilter) {
-      const gi = 11;
-      html += `<tr class="group-row">
-        <td>GROUP</td><td>${d.sent[gi]}</td><td>${d.done[gi]}</td>
-        <td>${bar(d.comp[gi])}</td>
-        <td><span class="pill ${pillC(d.esat[gi])}">${pct(d.esat[gi])}</span></td>
-        <td>${bar(d.q1[gi])}</td><td>${bar(d.q2[gi])}</td>
-        <td>${bar(d.q3[gi])}</td><td>${bar(d.q4[gi])}</td>
-      </tr>`;
+      const nd = wkRows.length;
+      if (nd > 0) {
+        const esat = wkRows.filter(r => r.e >= 8).length / nd;
+        const q1 = qsc(wkRows,'q1'), q2 = qsc(wkRows,'q2'), q3 = qsc(wkRows,'q3'), q4 = qsc(wkRows,'q4');
+        html += `<tr class="group-row">
+          <td>GROUP</td><td>${nd}</td>
+          <td><span class="pill ${pillC(esat)}">${pct(esat)}</span></td>
+          <td>${bar(q1)}</td><td>${bar(q2)}</td><td>${bar(q3)}</td><td>${bar(q4)}</td>
+        </tr>`;
+      }
     }
     html += `</tbody></table></div></div>`;
   });
-  document.getElementById('weeklyContent').innerHTML = html;
+  document.getElementById('weeklyContent').innerHTML = html || '<p style="color:#94a3b8;padding:20px">No weekly data available.</p>';
 }
 
 // ===== TRENDS =====
