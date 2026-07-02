@@ -801,6 +801,12 @@ function renderComments() {
 
 // ===== UPDATE DATA MODAL =====
 function openUpdateModal() {
+  const entered = prompt('🔒 Admin access required\n\nEnter password to upload data:');
+  if (entered === null) return; // cancelled
+  if (entered !== 'kickontes2026') {
+    alert('❌ Incorrect password. Access denied.');
+    return;
+  }
   document.getElementById('updateModal').style.display = 'flex';
   document.getElementById('uploadStatus').style.display = 'none';
   document.getElementById('xlsxInput').value = '';
