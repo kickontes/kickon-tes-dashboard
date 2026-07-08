@@ -160,10 +160,6 @@ tr.group-row td{background:rgba(61,81,102,0.1);font-weight:600;}
     <div class="header-stat">Completed <strong>335</strong></div>
     <div class="header-stat">Venues <strong>11</strong></div>
     <div class="header-stat">Weeks <strong>3</strong></div>
-      <div id="monthSwitcher" style="margin-left:auto;position:relative;display:none;">
-        <button id="monthSwitcherBtn" onclick="toggleMonthDropdown(event)" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600;">📅 Switch month ▾</button>
-        <div id="monthDropdownList" style="display:none;position:fixed;background:#1e293b;border:1px solid #3d5166;border-radius:10px;min-width:170px;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,0.6);overflow:hidden;"></div>
-      </div>
       <button onclick="openUpdateModal()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:6px;" title="Upload new Excel data">⬆ Update Data</button>
 </div>
 </div>
@@ -210,6 +206,12 @@ tr.group-row td{background:rgba(61,81,102,0.1);font-weight:600;}
 <!-- FILTERS -->
 <div class="filters">
   <span class="filter-label">Filter</span>
+  <select id="fYear" onchange="onYearChange()" style="min-width:90px;">
+    <option value="">All years</option>
+  </select>
+  <select id="fMonth" onchange="onMonthChange()" style="min-width:130px;">
+    <option value="">All months</option>
+  </select>
   <select id="fWeek" onchange="applyFilters()">
     <option value="">All weeks</option>
   </select>
@@ -999,6 +1001,7 @@ function formatMonthFull(key) {
 
 function rebuildDashboard(newRaw, sentMap, monthKey, histUpdates) {
   RAW = newRaw;
+  if (monthKey) currentMonthKey = monthKey;
   saveMonthRaw(monthKey, newRaw); // persist comments for history
 
   // Compute JUN26-equivalent stats from new data
@@ -1120,38 +1123,33 @@ function getSavedMonths() {
   catch(e) { return []; }
 }
 
-function toggleMonthDropdown(e) {
-  e.stopPropagation();
-  const list = document.getElementById('monthDropdownList');
-  const btn = document.getElementById('monthSwitcherBtn');
-  if (!list || !btn) return;
-  if (list.style.display === 'none') {
-    const rect = btn.getBoundingClientRect();
-    list.style.top = (rect.bottom + 6) + 'px';
-    list.style.right = (window.innerWidth - rect.right) + 'px';
-    list.style.display = 'block';
-  } else {
-    list.style.display = 'none';
-  }
-}
-document.addEventListener('click', function() {
-  const list = document.getElementById('monthDropdownList');
-  if (list) list.style.display = 'none';
-});
+let currentMonthKey = 'Jun-26';
 
 function refreshMonthSelectors() {
   const months = getSavedMonths();
-  const switcher = document.getElementById('monthSwitcher');
-  const list = document.getElementById('monthDropdownList');
-  if (switcher) {
-    if (months.length > 1) {
-      switcher.style.display = 'block';
-      if (list) list.innerHTML = months.map(m =>
-        `<div onclick="switchToMonth('${m}')" style="padding:11px 18px;color:#e2e8f0;cursor:pointer;font-size:0.87rem;font-weight:500;border-bottom:1px solid #2d4059;background:#1e293b;" onmouseover="this.style.background='#2d4a6a'" onmouseout="this.style.background='#1e293b'">${formatMonthFull(m)}</div>`
-      ).join('');
-    } else {
-      switcher.style.display = 'none';
-    }
+  const MNAMES = {Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',Jun:'June',
+    Jul:'July',Aug:'August',Sep:'September',Oct:'October',Nov:'November',Dec:'December'};
+
+  // Build year list
+  const years = [...new Set(months.map(m => '20' + m.split('-')[1]))].sort();
+  const fYear = document.getElementById('fYear');
+  if (fYear) {
+    const curYr = '20' + (currentMonthKey||'Jun-26').split('-')[1];
+    fYear.innerHTML = '<option value="">All years</option>' +
+      years.map(y => `<option value="${y}" ${y===curYr?'selected':''}>${y}</option>`).join('');
+  }
+
+  // Build month list for current year
+  const selYear = fYear?.value || '';
+  const filtered = selYear ? months.filter(m => '20'+m.split('-')[1] === selYear) : months;
+  const fMonth = document.getElementById('fMonth');
+  if (fMonth) {
+    const curMon = currentMonthKey || '';
+    fMonth.innerHTML = '<option value="">All months</option>' +
+      filtered.map(m => {
+        const [mon, yr] = m.split('-');
+        return `<option value="${m}" ${m===curMon?'selected':''}>${MNAMES[mon]||mon} 20${yr}</option>`;
+      }).join('');
   }
   // Voice of Staff selector
   const voiceSel = document.getElementById('commentMonth');
@@ -1169,10 +1167,32 @@ function refreshMonthSelectors() {
   }
 }
 
+function onYearChange() {
+  const MNAMES = {Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',Jun:'June',
+    Jul:'July',Aug:'August',Sep:'September',Oct:'October',Nov:'November',Dec:'December'};
+  const selYear = document.getElementById('fYear')?.value || '';
+  const months = getSavedMonths();
+  const filtered = selYear ? months.filter(m => '20'+m.split('-')[1] === selYear) : months;
+  const fMonth = document.getElementById('fMonth');
+  if (fMonth) {
+    fMonth.innerHTML = '<option value="">All months</option>' +
+      filtered.map(m => {
+        const [mon, yr] = m.split('-');
+        return `<option value="${m}">${MNAMES[mon]||mon} 20${yr}</option>`;
+      }).join('');
+  }
+}
+
+function onMonthChange() {
+  const monthKey = document.getElementById('fMonth')?.value;
+  if (monthKey) switchToMonth(monthKey);
+}
+
 function switchToMonth(monthKey) {
   if (!monthKey) return;
   const raw = getMonthRaw(monthKey);
   if (!raw) { alert('No data saved for ' + formatMonthFull(monthKey) + '. Please upload the Excel file for this month.'); return; }
+  currentMonthKey = monthKey;
   rebuildDashboard(raw, {}, monthKey, null);
 }
 
