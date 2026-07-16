@@ -728,7 +728,12 @@ function renderComments() {
   const search = (document.getElementById('commentSearch')||{}).value||'';
   const selectedMonth = document.getElementById('fMonth')?.value || '';
   const sourceRaw2 = selectedMonth ? (getMonthRaw(selectedMonth) || RAW) : RAW;
-  const baseFiltered = selectedMonth ? sourceRaw2 : getFiltered();
+  const baseFiltered = sourceRaw2.filter(r => {
+    if (filters.venue && r.v !== filters.venue) return false;
+    if (filters.week && r.w !== filters.week) return false;
+    if (filters.role && r.r !== filters.role) return false;
+    return true;
+  });
   const f = baseFiltered.filter(r=>{
     if (!r.c && !r.rs) return false;
     if (!search) return true;
