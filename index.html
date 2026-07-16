@@ -1093,7 +1093,7 @@ function sortMonthKeys(arr) {
 }
 
 function getSavedMonths() {
-  try { return JSON.parse(localStorage.getItem('tes_saved_months') || '[]'); }
+  try { return sortMonthKeys(JSON.parse(localStorage.getItem('tes_saved_months') || '[]')); }
   catch(e) { return []; }
 }
 
