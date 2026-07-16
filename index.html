@@ -345,9 +345,6 @@ tr.group-row td{background:rgba(61,81,102,0.1);font-weight:600;}
   <div class="section-title">Voice of Staff</div>
   <p class="section-sub">Browse staff comments by month. Use filters above or search below.</p>
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
-    <select id="commentMonth" onchange="renderComments()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:0.83rem;">
-      <option value="">Current month</option>
-    </select>
     <input type="text" class="search-bar" id="commentSearch" placeholder="Search comments, venues, or reasons..." oninput="renderComments()" style="margin-bottom:0;flex:1;min-width:200px;">
   </div>
   <div id="commentCount"></div>
@@ -748,7 +745,7 @@ function renderPerVenue() {
 // ===== VOICE =====
 function renderComments() {
   const search = (document.getElementById('commentSearch')||{}).value||'';
-  const selectedMonth = (document.getElementById('commentMonth')||{}).value||'';
+  const selectedMonth = document.getElementById('fMonth')?.value || '';
   const sourceRaw2 = selectedMonth ? (getMonthRaw(selectedMonth) || RAW) : RAW;
   const baseFiltered = selectedMonth ? sourceRaw2 : getFiltered();
   const f = baseFiltered.filter(r=>{
@@ -1124,13 +1121,6 @@ function refreshMonthSelectors() {
         const [mon, yr] = m.split('-');
         return `<option value="${m}" ${m===curMon?'selected':''}>${MNAMES[mon]||mon} 20${yr}</option>`;
       }).join('');
-  }
-  // Voice of Staff selector
-  const voiceSel = document.getElementById('commentMonth');
-  if (voiceSel) {
-    const cur = voiceSel.value;
-    voiceSel.innerHTML = '<option value="">Current month</option>' +
-      months.map(m => `<option value="${m}" ${m===cur?'selected':''}>${formatMonthFull(m)}</option>`).join('');
   }
 }
 
