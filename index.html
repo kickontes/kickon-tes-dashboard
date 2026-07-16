@@ -712,33 +712,14 @@ function renderPerVenue() {
     card.innerHTML = `
       <h3>${name}</h3>
       <div class="score" style="color:${col(e)}">ESAT: ${pct(e)}</div>
-      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px">${JUN26.done[i]}/${JUN26.sent[i]} responses · Completion: ${pct(JUN26.comp[i])}</div>
-      <canvas id="${canvasId}" height="120"></canvas>
-      <div class="score-grid" style="margin-top:6px">
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px">${JUN26.done[i]}/${JUN26.sent[i]} responses · Completion: ${pct(JUN26.comp[i])}</div>
+      <div class="score-grid">
         <div class="lbl">Lead By Example</div><div class="val" style="color:${col(q1)}">${pct(q1)}</div>
         <div class="lbl">Real Conversations</div><div class="val" style="color:${col(q2)}">${pct(q2)}</div>
         <div class="lbl">Do What We Say</div><div class="val" style="color:${col(q3)}">${pct(q3)}</div>
         <div class="lbl">Confident in Decisions</div><div class="val" style="color:${col(q4)}">${pct(q4)}</div>
       </div>`;
     grid.appendChild(card);
-    setTimeout(()=>{
-      const g = JUN26.group;
-      new Chart(document.getElementById(canvasId),{
-        type:'radar',
-        data:{
-          labels:['Lead','Conversations','Do What We Say','Decisions','ESAT'],
-          datasets:[
-            {data:[q1,q2,q3,q4,e].map(v=>+(v*100).toFixed(1)),borderColor:PALETTE[i],backgroundColor:PALETTE[i]+'28',pointBackgroundColor:PALETTE[i],borderWidth:2},
-            {data:[g.q1,g.q2,g.q3,g.q4,g.esat].map(v=>+(v*100).toFixed(1)),borderColor:'rgba(255,255,255,0.18)',backgroundColor:'transparent',pointBackgroundColor:'rgba(255,255,255,0.18)',borderWidth:1,borderDash:[4,3]}
-          ]
-        },
-        options:{
-          responsive:true,maintainAspectRatio:false,
-          scales:{r:{min:55,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,0.06)'},angleLines:{color:'rgba(255,255,255,0.06)'},pointLabels:{color:'#8b949e',font:{size:9}}}},
-          plugins:{legend:{display:false}}
-        }
-      });
-    },50);
   });
 }
 
